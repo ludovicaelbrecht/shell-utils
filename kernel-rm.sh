@@ -6,4 +6,4 @@ for i in "$@" ;
 	do PKGS="$PKGS kernel-devel-${i}.x86_64 kernel-modules-${i}.x86_64 kernel-${i}.x86_64  kernel-core-${i}.x86_64";
 done
 
-dnf remove ${PKGS}
+dnf remove "${PKGS}"
