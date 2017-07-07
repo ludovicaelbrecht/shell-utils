@@ -44,21 +44,25 @@ echo "*** source dir is ${SRC_BKP}"
 
 SPLIT_DIR="/tmp/split_output/"
 export SPLIT_DIR
-mkdir "$SPLIT_DIR"
+mkdir "${SPLIT_DIR}"
 echo
 echo "*** building lists of files to rsync..."
-cd "$SPLIT_DIR" || exit 9
+cd "${SPLIT_DIR}" || exit 9
 find "${SRC_BKP}" -type f -iname "$FILES_TO_BKP" | split -l 20
 
 echo
 echo "*** modifying find results to have a relative path..."
-
-#TODO for this # for file in /tmp/split_output/* ; do while read i; do realpath --relative-base="/home/gerry/move/mount-gsm/Internal shared storage/DCIM/Camera/" "$i" >> "${file}_rel"; done < "$file"; done
+for split_file in "${SPLIT_DIR}"* ; 
+do 
+	while read i; 
+		do realpath --relative-base="${SRC_BKP}" "$i" >> "${split_file}_relative"; 
+	done < "${split_file}"; 
+done
 
 
 echo "*** starting rsync (from dir $(pwd)). this may take a while..."
 #from https://serverfault.com/questions/43014/copying-a-large-directory-tree-locally-cp-or-rsync :
-for BATCH in "${SPLIT_DIR}"*; 
+for BATCH in "${SPLIT_DIR}"*_relative; 
 	do echo rsync -aHAXvhW --no-compress --checksum --progress --files-from="$BATCH" "${SRC_BKP}" "$DEST_BKP"; 
 	rsync -aHAXvhW --no-compress --checksum --progress --files-from="$BATCH" / "$DEST_BKP"; 
 done
