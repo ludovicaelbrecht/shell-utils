@@ -1,0 +1,10 @@
+phone-bkp.sh:
+possible fix for splitting rsync into batches:
+
+mkdir /tmp/mystuff.rsync
+cd /mystuff && find . -print | ( cd /tmp/mystuff.rsync && split -l 50 - )
+for i in /tmp/mystuff.rsync/*
+do
+	rsync -a --files-from=$i /mystuff/ remote:/mystuff/
+done
+rm -r /tmp/mystuff.rsync 
