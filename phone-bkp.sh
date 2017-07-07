@@ -40,18 +40,29 @@ aft-mtp-mount "${MOUNT_DIR}"
 
 echo
 echo "*** source dir is ${SRC_BKP}"
-cd "${SRC_BKP}"
 
 
-#from https://serverfault.com/questions/43014/copying-a-large-directory-tree-locally-cp-or-rsync :
+SPLIT_DIR="/tmp/split_output/"
+export SPLIT_DIR
+mkdir "$SPLIT_DIR"
 echo
+echo "*** building lists of files to rsync..."
+cd "$SPLIT_DIR" || exit 9
+find . -type f -iname "$FILES_TO_BKP" | split -l 20
+
+
 echo "*** starting rsync (from dir $(pwd)). this may take a while..."
 echo "rsync -aHAXvhW --no-compress --checksum --progress $FILES_TO_BKP $DEST_BKP"
-rsync -aHAXvhW --no-compress --checksum --progress "$FILES_TO_BKP" "$DEST_BKP"
+#from https://serverfault.com/questions/43014/copying-a-large-directory-tree-locally-cp-or-rsync :
+for BATCH in "${SPLIT_DIR}"*; 
+	do rsync -aHAXvhW --no-compress --checksum --progress --files-from="$BATCH" "${SRC_BKP}" "$DEST_BKP"; 
+done
+###rsync -aHAXvhW --no-compress --checksum --progress "$FILES_TO_BKP" "$DEST_BKP"
+#TODO uncomment#rm -rf "$SPLIT_DIR"
 
 echo
 echo "*** copying done. moving on to file verification"
-#TODO can we use xargs here to parallelize stuff? or do we risk messing up the output files?
+#TODO can we use xargs or GNU Parallel here to parallelize stuff? or do we risk messing up the output files?
 export SRC_MD5=/tmp/checklist.chk
 export BKP_MD5=/tmp/bkp-checklist.chk
 echo "*** removing md5sum lists in case they exist..."
