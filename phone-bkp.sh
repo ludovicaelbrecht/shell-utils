@@ -54,7 +54,7 @@ echo
 echo "*** modifying find results to have a relative path..."
 for split_file in "${SPLIT_DIR}"* ; 
 do 
-	while read i; 
+	while read -r i; 
 		do realpath --relative-base="${SRC_BKP}" "$i" >> "${split_file}_relative"; 
 	done < "${split_file}"; 
 done
