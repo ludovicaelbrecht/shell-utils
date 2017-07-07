@@ -11,7 +11,8 @@ export FILES_TO_BKP="*.mp4"
 MOUNT_DIR="${HOME}/move/mount-gsm/"
 export MOUNT_DIR
 
-export DEST_BKP=${HOME}/move/bkps_gsms/bkp_${PHONE_TYPE}_$(date "+%d%b%Y")/
+DEST_BKP=${HOME}/move/bkps_gsms/bkp_${PHONE_TYPE}_$(date "+%d%b%Y")/
+export DEST_BKP
 echo "*** creating dir for backup: $DEST_BKP"
 mkdir "$DEST_BKP"
 
@@ -46,7 +47,7 @@ cd "${SRC_BKP}"
 echo
 echo "*** starting rsync (from dir $(pwd)). this may take a while..."
 echo "rsync -aHAXvhW --no-compress --checksum --progress $FILES_TO_BKP $DEST_BKP"
-rsync -aHAXvhW --no-compress --checksum --progress $FILES_TO_BKP $DEST_BKP
+rsync -aHAXvhW --no-compress --checksum --progress "$FILES_TO_BKP" "$DEST_BKP"
 
 echo
 echo "*** copying done. moving on to file verification"
