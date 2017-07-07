@@ -5,7 +5,13 @@ PHONE_TYPE=""
 read -r PHONE_TYPE
 #echo "phone type is $PHONE_TYPE"
 
-export DEST_BKP=/home/ludovic/move/bkps_gsms/bkp_${PHONE_TYPE}_$(date "+%d%b%Y")/
+FILES_TO_BKP="*.mp4"
+export FILES_TO_BKP="*.mp4"
+
+MOUNT_DIR="${HOME}/move/mount-gsm/"
+export MOUNT_DIR
+
+export DEST_BKP=${HOME}/move/bkps_gsms/bkp_${PHONE_TYPE}_$(date "+%d%b%Y")/
 echo "*** creating dir for backup: $DEST_BKP"
 mkdir "$DEST_BKP"
 
@@ -14,13 +20,13 @@ export SRC_BKP=""
 if [ "$PHONE_TYPE" == "N6P" ] 
 then
 	echo "chosen phone: Nexus 6P"
-	#export SRC_BKP="/home/ludovic/move/mount-gsm/Internal shared storage/DCIM/Camera/"
-	export SRC_BKP="/home/ludovic/move/mount-gsm/DCIM/Camera/"
+	export SRC_BKP="${MOUNT_DIR}/Internal shared storage/DCIM/Camera/"
+	#export SRC_BKP="${MOUNT_DIR}/DCIM/Camera/"
 elif [ "$PHONE_TYPE" == "N5" ] 
 then
 	echo "chosen phone: Nexus 5"
-	#export SRC_BKP="/home/ludovic/move/mount-gsm/Internal storage/DCIM/Camera/"
-	export SRC_BKP="/home/ludovic/move/mount-gsm/DCIM/Camera/"
+	#export SRC_BKP="${MOUNT_DIR}/DCIM/Camera/"
+	export SRC_BKP="${MOUNT_DIR}/Internal storage/DCIM/Camera/"
 else 
 	echo "unknown phone type entered"
 	exit 2
@@ -28,18 +34,19 @@ fi
 
 echo
 echo "*** mounting phone..."
-#this seems like a slower fuse fs#/usr/src/local-builds/android-file-transfer-linux/build/fuse/aft-mtp-mount ~/move/mount-gsm/
-simple-mtpfs ~/move/mount-gsm/
+aft-mtp-mount "${MOUNT_DIR}"
+#simple-mtpfs "${MOUNT_DIR}"
 
 echo
 echo "*** source dir is ${SRC_BKP}"
 cd "${SRC_BKP}"
 
+
 #from https://serverfault.com/questions/43014/copying-a-large-directory-tree-locally-cp-or-rsync :
 echo
 echo "*** starting rsync (from dir $(pwd)). this may take a while..."
-echo "rsync -aHAXvhW --no-compress --checksum --progress ./*mp4 $DEST_BKP"
-rsync -aHAXvhW --no-compress --checksum --progress ./*mp4 "$DEST_BKP"
+echo "rsync -aHAXvhW --no-compress --checksum --progress $FILES_TO_BKP $DEST_BKP"
+rsync -aHAXvhW --no-compress --checksum --progress $FILES_TO_BKP $DEST_BKP
 
 echo
 echo "*** copying done. moving on to file verification"
@@ -51,16 +58,16 @@ rm ${BKP_MD5} ${SRC_MD5}
 
 echo "*** generating md5sum list of source files..."
 cd "${SRC_BKP}"
-find . -type f -name "*mp4" -exec md5sum "{}" + > ${SRC_MD5}
+find . -type f -name "$FILES_TO_BKP" -exec md5sum "{}" + > ${SRC_MD5}
 
 echo "*** generating md5sum list of bkp files..."
 cd "${DEST_BKP}"
-find . -type f -name "*mp4" -exec md5sum "{}" + > ${BKP_MD5}
+find . -type f -name "$FILES_TO_BKP" -exec md5sum "{}" + > ${BKP_MD5}
 
 echo
 echo "*** sorting & diff'ing md5sum lists..."
-sort ${SRC_MD5}  -o ${SRC_MD5}
-sort ${BKP_MD5}  -o ${BKP_MD5}
+sort ${SRC_MD5} -o ${SRC_MD5}
+sort ${BKP_MD5} -o ${BKP_MD5}
 diff ${BKP_MD5} ${SRC_MD5}
 echo "md5sum list files are: ${SRC_MD5} ${BKP_MD5}"
 
