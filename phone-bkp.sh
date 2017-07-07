@@ -21,13 +21,13 @@ export SRC_BKP=""
 if [ "$PHONE_TYPE" == "N6P" ] 
 then
 	echo "chosen phone: Nexus 6P"
-	export SRC_BKP="${MOUNT_DIR}/Internal shared storage/DCIM/Camera/"
-	#export SRC_BKP="${MOUNT_DIR}/DCIM/Camera/"
+	export SRC_BKP="${MOUNT_DIR}Internal shared storage/DCIM/Camera/"
+	#export SRC_BKP="${MOUNT_DIR}DCIM/Camera/"
 elif [ "$PHONE_TYPE" == "N5" ] 
 then
 	echo "chosen phone: Nexus 5"
-	#export SRC_BKP="${MOUNT_DIR}/DCIM/Camera/"
-	export SRC_BKP="${MOUNT_DIR}/Internal storage/DCIM/Camera/"
+	#export SRC_BKP="${MOUNT_DIR}DCIM/Camera/"
+	export SRC_BKP="${MOUNT_DIR}Internal storage/DCIM/Camera/"
 else 
 	echo "unknown phone type entered"
 	exit 2
@@ -48,15 +48,21 @@ mkdir "$SPLIT_DIR"
 echo
 echo "*** building lists of files to rsync..."
 cd "$SPLIT_DIR" || exit 9
-find . -type f -iname "$FILES_TO_BKP" | split -l 20
+find "${SRC_BKP}" -type f -iname "$FILES_TO_BKP" | split -l 20
+
+echo
+echo "*** modifying find results to have a relative path..."
+
+#TODO for this # for file in /tmp/split_output/* ; do while read i; do realpath --relative-base="/home/gerry/move/mount-gsm/Internal shared storage/DCIM/Camera/" "$i" >> "${file}_rel"; done < "$file"; done
 
 
 echo "*** starting rsync (from dir $(pwd)). this may take a while..."
-echo "rsync -aHAXvhW --no-compress --checksum --progress $FILES_TO_BKP $DEST_BKP"
 #from https://serverfault.com/questions/43014/copying-a-large-directory-tree-locally-cp-or-rsync :
 for BATCH in "${SPLIT_DIR}"*; 
-	do rsync -aHAXvhW --no-compress --checksum --progress --files-from="$BATCH" "${SRC_BKP}" "$DEST_BKP"; 
+	do echo rsync -aHAXvhW --no-compress --checksum --progress --files-from="$BATCH" "${SRC_BKP}" "$DEST_BKP"; 
+	rsync -aHAXvhW --no-compress --checksum --progress --files-from="$BATCH" / "$DEST_BKP"; 
 done
+###echo "rsync -aHAXvhW --no-compress --checksum --progress $FILES_TO_BKP $DEST_BKP"
 ###rsync -aHAXvhW --no-compress --checksum --progress "$FILES_TO_BKP" "$DEST_BKP"
 #TODO uncomment#rm -rf "$SPLIT_DIR"
 
