@@ -1,8 +1,11 @@
 #!/bin/bash
 
-echo "phone type (N6P / N5)?"
 PHONE_TYPE=""
-read -r PHONE_TYPE
+while [ "${PHONE_TYPE}" != "N6P" ] && [ "${PHONE_TYPE}" != "N5" ]
+do 
+	echo "phone type (N6P / N5)?"
+	read -r PHONE_TYPE
+done
 #echo "phone type is $PHONE_TYPE"
 
 FILES_TO_BKP="*.mp4"
