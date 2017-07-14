@@ -9,7 +9,7 @@ done
 #echo "phone type is $PHONE_TYPE"
 
 FILES_TO_BKP="*.mp4"
-export FILES_TO_BKP="*.mp4"
+export FILES_TO_BKP
 
 MOUNT_DIR="${HOME}/move/mount-gsm/"
 export MOUNT_DIR
