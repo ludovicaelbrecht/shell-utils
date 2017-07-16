@@ -9,6 +9,7 @@ done
 #echo "phone type is $PHONE_TYPE"
 
 FILES_TO_BKP="*.mp4"
+#FILES_TO_BKP="*.jpg"
 export FILES_TO_BKP
 
 MOUNT_DIR="${HOME}/move/mount-gsm/"
@@ -34,8 +35,8 @@ then
 elif [ "$PHONE_TYPE" == "N5" ] 
 then
 	echo "chosen phone: Nexus 5"
-	#export SRC_DIR="${MOUNT_DIR}DCIM/Camera/"
 	export SRC_DIR="${MOUNT_DIR}Internal storage/DCIM/Camera/"
+	#export SRC_DIR="${MOUNT_DIR}DCIM/Camera/"
 else 
 	echo "unknown phone type entered"
 	exit 2
