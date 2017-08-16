@@ -10,6 +10,7 @@ done
 
 FILES_TO_BKP="*.mp4"
 #FILES_TO_BKP="*.jpg"
+FILES_TO_BKP="*"
 export FILES_TO_BKP
 
 MOUNT_DIR="${HOME}/move/mount-gsm/"
@@ -22,8 +23,17 @@ mkdir "$DEST_DIR"
 
 
 echo -e "\n*** mounting phone at ${MOUNT_DIR}..."
+# aft sometimes fails to mount, but if the device has just been mounted with simplemtpfs, it usually mounts correctly.
 aft-mtp-mount "${MOUNT_DIR}"
-#simple-mtpfs "${MOUNT_DIR}"
+mount_exit_code=$?
+if [ $mount_exit_code -eq 0 ]; then
+	echo "mounted successfully"
+else
+	echo "mounted unsuccessfully, mounting with simple-mtpfs, unmounting, and remounting with aft"
+	simple-mtpfs "${MOUNT_DIR}"
+	fusermount -u"$MOUNT_DIR" #unmount simple-mtpfs mount
+	aft-mtp-mount "${MOUNT_DIR}"
+fi
 
 
 export SRC_DIR=""
@@ -50,7 +60,8 @@ SIZE_OF_SPLITS=20
 export SIZE_OF_SPLITS
 mkdir "${SPLIT_DIR}"
 echo -e "\n*** removing files in ${SPLIT_DIR}, if any..."
-echo FIXME rm "${SPLIT_DIR}"*
+rm "${SPLIT_DIR}"*
+
 echo
 echo "*** building lists of files to rsync..."
 cd "${SPLIT_DIR}" || exit 9
