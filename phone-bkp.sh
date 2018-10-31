@@ -111,17 +111,19 @@ rm "${BKP_MD5}" "${SRC_MD5}"
 
 echo "*** generating md5sums of source files..."
 cd "$SRC_DIR"
-find . -type f -name "$FILES_TO_BKP" -exec md5sum "{}" + > ${SRC_MD5}
+#find . -type f -name "$FILES_TO_BKP" -exec md5sum "{}" + > ${SRC_MD5}
+find . -type f -name "$FILES_TO_BKP" -print0 | xargs --verbose --max-args=5 --max-procs=1 -0 crc32 > ${SRC_MD5}
 
 echo "*** generating md5sums of bkp files..."
 cd "$DEST_DIR"
-find . -type f -name "$FILES_TO_BKP" -exec md5sum "{}" + > ${BKP_MD5}
+#find . -type f -name "$FILES_TO_BKP" -exec md5sum "{}" + > ${BKP_MD5}
+find . -type f -name "$FILES_TO_BKP" -print0 | xargs --max-args=5 --max-procs=1 -0 crc32 > ${BKP_MD5}
 
 echo
 echo "*** sorting & diff'ing md5sum lists..."
 sort ${SRC_MD5} -o ${SRC_MD5}
 sort ${BKP_MD5} -o ${BKP_MD5}
-diff ${SRC_MD5} ${BKP_MD5}
+diff -u ${SRC_MD5} ${BKP_MD5}
 echo "md5sum list files are: ${SRC_MD5} ${BKP_MD5}"
 
 echo
@@ -138,7 +140,7 @@ cd "${DEST_DIR}"
 /bin/ls -F > "$BKP_LS"
 BKP_LS_COUNT=$(/bin/ls | wc -l)
 
-diff ${SRC_LS} ${BKP_LS}
+diff -u ${SRC_LS} ${BKP_LS}
 echo "ls output files are: ${SRC_LS} ${BKP_LS}"
 echo "output of ls | wc -l is: src ${SRC_LS_COUNT} - bkp ${BKP_LS_COUNT}"
 
