@@ -1,14 +1,14 @@
 #!/bin/bash
 
 PHONE_TYPE=""
-while [ "${PHONE_TYPE}" != "N6P" ] && [ "${PHONE_TYPE}" != "N5" ]
+while [ "${PHONE_TYPE}" != "N6P" ] && [ "${PHONE_TYPE}" != "N5" ] && [ "${PHONE_TYPE}" != "V30" ]
 do 
-	echo "phone type (N6P / N5)?"
+	echo "phone type (N6P / N5 / V30)?"
 	read -r PHONE_TYPE
 done
 #echo "phone type is $PHONE_TYPE"
 
-FILES_TO_BKP="*.mp4"
+#FILES_TO_BKP="*.mp4"
 #FILES_TO_BKP="*.jpg"
 FILES_TO_BKP="*"
 export FILES_TO_BKP
@@ -22,18 +22,23 @@ echo "*** creating dir for backup: $DEST_DIR"
 mkdir -p "$DEST_DIR"
 
 
-echo -e "\n*** mounting phone at ${MOUNT_DIR}..."
-# aft sometimes fails to mount, but if the device has just been mounted with simplemtpfs, it usually mounts correctly.
-fusermount -u "${MOUNT_DIR}" #just in case. TODO should first verify if it is mounted
+echo -e "\n*** mounting phone at ${MOUNT_DIR} ..."
+mount | grep "${MOUNT_DIR}"
+if [ $? -eq 0 ]; then
+	fusermount -u "${MOUNT_DIR}"
+fi
+
 aft-mtp-mount "${MOUNT_DIR}"
 mount_exit_code=$?
-if [ $mount_exit_code -eq 0 ]; then
+if [ $mount_exit_code -ne 0 ]; then
 	echo "mounted successfully"
 else
+	# aft sometimes fails to mount, but if the device has just been mounted with simplemtpfs, it usually mounts correctly.
 	echo "mounted unsuccessfully, mounting with simple-mtpfs, unmounting, and remounting with aft"
 	simple-mtpfs "${MOUNT_DIR}"
 	fusermount -u "${MOUNT_DIR}" #unmount simple-mtpfs mount
 	aft-mtp-mount "${MOUNT_DIR}"
+	if [ $? -eq 0 ]; then echo "failed mounting - exiting script."; exit 123; fi
 fi
 
 
@@ -48,6 +53,10 @@ then
 	echo "chosen phone: Nexus 5"
 	export SRC_DIR="${MOUNT_DIR}Internal storage/DCIM/Camera/"
 	#export SRC_DIR="${MOUNT_DIR}DCIM/Camera/"
+elif [ "$PHONE_TYPE" == "V30" ] 
+then
+	echo "chosen phone: LG V30"
+	export SRC_DIR="${MOUNT_DIR}SD card/DCIM/Camera/"
 else 
 	echo "unknown phone type entered"
 	exit 2
@@ -57,16 +66,18 @@ echo -e "\n*** source dir is ${SRC_DIR}"
 
 SPLIT_DIR="/tmp/split_output/"
 export SPLIT_DIR
-SIZE_OF_SPLITS=20
+SIZE_OF_SPLITS=15
 export SIZE_OF_SPLITS
 mkdir -p "${SPLIT_DIR}"
 echo -e "\n*** removing files in ${SPLIT_DIR}, if any..."
 rm "${SPLIT_DIR}"*
 
 echo
-echo "*** building lists of files to rsync..."
+echo "*** building lists of files to rsync, and splitting them..."
 cd "${SPLIT_DIR}" || exit 9
 find "${SRC_DIR}" -type f -iname "$FILES_TO_BKP" | split -l ${SIZE_OF_SPLITS}
+AMOUNT_OF_BATCHES=$(ls ${SPLIT_DIR} | wc -l)
+echo "total amount of batches: $AMOUNT_OF_BATCHES"
 
 echo -e "\n*** modifying find results to have a relative path..."
 for split_file in "${SPLIT_DIR}"* ; 
@@ -79,8 +90,11 @@ done
 
 echo -e "\n*** starting rsync (from dir $(pwd)). this may take a while..."
 #from https://serverfault.com/questions/43014/copying-a-large-directory-tree-locally-cp-or-rsync :
+CURR_BATCH_NMBR=0
 for BATCH in "${SPLIT_DIR}"*_relative; 
 	do echo rsync -aHAXvhW --no-compress --checksum --progress --files-from="$BATCH" "${SRC_DIR}" "$DEST_DIR"; 
+	CURR_BATCH_NMBR=$((CURR_BATCH_NMBR+1))
+	echo "Batch $CURR_BATCH_NMBR of $AMOUNT_OF_BATCHES"
 	rsync -aHAXvhW --no-compress --checksum --progress --files-from="$BATCH" "${SRC_DIR}" "$DEST_DIR"; 
 done
 ###old way of rsyncing, before it was split into batch files:
